@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_page">#FDF2F0</color>
+    <color name="primary_accent">#8E283B</color>
+    <color name="text_dark">#1E1E1E</color>
+    <color name="text_muted">#6C6C6C</color>
+    <color name="switch_thumb">#A8243E</color>
+    <color name="switch_track">#F5C5CE</color>
+</resources>

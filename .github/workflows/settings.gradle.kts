@@ -6,10 +6,12 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
 }
-rootProject.name = "MissedCallReminder"
+
+rootProject.name = "Missed-call-reminder"
 include(":app")

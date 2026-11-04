@@ -6,61 +6,51 @@ import android.content.Intent
 import android.telephony.TelephonyManager
 
 class CallReceiver : BroadcastReceiver() {
-
     companion object {
         private var lastState = TelephonyManager.CALL_STATE_IDLE
-        private var ringStartTime = 0L
-        private var callerNumber: String? = null
+        private var savedNumber: String? = null
+        private var isIncoming = false
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
 
-        val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
-        val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER) ?: "Unknown"
+        val stateStr = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
+        val incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+
+        var state = TelephonyManager.CALL_STATE_IDLE
+        if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
+            state = TelephonyManager.CALL_STATE_RINGING
+        } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+            state = TelephonyManager.CALL_STATE_OFFHOOK
+        }
+
+        onCustomCallStateChanged(context, state, incomingNumber)
+    }
+
+    private fun onCustomCallStateChanged(context: Context, state: Int, number: String?) {
+        if (lastState == state) return
 
         when (state) {
-            TelephonyManager.EXTRA_STATE_RINGING -> {
-                ringStartTime = System.currentTimeMillis()
-                callerNumber = number
-                lastState = TelephonyManager.CALL_STATE_RINGING
+            TelephonyManager.CALL_STATE_RINGING -> {
+                isIncoming = true
+                savedNumber = number
             }
-
-            TelephonyManager.EXTRA_STATE_IDLE -> {
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    val duration = System.currentTimeMillis() - ringStartTime
-                    val phone = callerNumber ?: number
-                    val callCount = CallTracker.recordCall(phone)
-
-                    if (duration < 2500) {
-                        // User actively hit the red decline button
-                        if (callCount >= 3) {
-                            CallTracker.markPending(phone)
-                            AlertHelper.vibrateUrgent(context)
-                            AlertHelper.scheduleIntervals(context, phone)
-                            AlertHelper.showNotification(context, phone, isEmergency = true)
-                        } else {
-                            AlertHelper.showDeclinedOptions(context, phone)
-                        }
-                    } else {
-                        // Regular missed call
-                        CallTracker.markPending(phone)
-                        if (callCount >= 3) {
-                            AlertHelper.vibrateUrgent(context)
-                            AlertHelper.scheduleIntervals(context, phone)
-                            AlertHelper.showNotification(context, phone, isEmergency = true)
-                        } else {
-                            AlertHelper.showNotification(context, phone, isEmergency = false)
-                        }
+            TelephonyManager.CALL_STATE_OFFHOOK -> {
+                // Call was answered
+                isIncoming = false
+            }
+            TelephonyManager.CALL_STATE_IDLE -> {
+                if (isIncoming) {
+                    // Call was rejected or missed
+                    val isEscalated = CallTracker.recordCall(savedNumber)
+                    if (isEscalated) {
+                        AlertHelper.triggerEmergencyEscalation(context, savedNumber ?: "Unknown")
                     }
                 }
-                lastState = TelephonyManager.CALL_STATE_IDLE
-            }
-
-            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                callerNumber?.let { CallTracker.clear(it) }
-                lastState = TelephonyManager.CALL_STATE_OFFHOOK
+                isIncoming = false
             }
         }
+        lastState = state
     }
 }

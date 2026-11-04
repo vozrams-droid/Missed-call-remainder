@@ -7,10 +7,11 @@ import android.content.Intent
 class ScreenUnlockReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_USER_PRESENT) {
-            if (CallTracker.pendingNumbers.isNotEmpty()) {
-                val num = CallTracker.pendingNumbers.first()
-                AlertHelper.vibratePulse(context)
-                AlertHelper.showNotification(context, num, isEmergency = true, prefix = "Pending Callback")
+            val pendingCount = CallTracker.getPendingMissedCount()
+            if (pendingCount > 0) {
+                AlertHelper.triggerUnlockReminder(context, pendingCount)
+                // Clears count after alerting so it won't repeatedly buzz on every single unlock
+                CallTracker.clearPending()
             }
         }
     }

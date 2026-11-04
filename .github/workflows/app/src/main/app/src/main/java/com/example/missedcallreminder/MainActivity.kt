@@ -1,6 +1,7 @@
 package com.example.missedcallreminder
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -10,18 +11,14 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private val unlockReceiver = ScreenUnlockReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Create a programmatic layout so missing XML can never crash the app
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -50,14 +47,18 @@ class MainActivity : AppCompatActivity() {
 
         try {
             AlertHelper.createChannel(this)
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
 
         requestRequiredPermissions()
 
         try {
             val filter = IntentFilter(Intent.ACTION_USER_PRESENT)
-            registerReceiver(unlockReceiver, filter)
-        } catch (_: Exception) {}
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(unlockReceiver, filter, RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(unlockReceiver, filter)
+            }
+        } catch (_: Throwable) {}
     }
 
     private fun requestRequiredPermissions() {
@@ -71,11 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         val missing = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
         }
 
         if (missing.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, missing.toTypedArray(), 1001)
+            requestPermissions(missing.toTypedArray(), 1001)
         }
     }
 
@@ -83,6 +84,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         try {
             unregisterReceiver(unlockReceiver)
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
     }
 }

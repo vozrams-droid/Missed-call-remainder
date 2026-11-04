@@ -1,16 +1,16 @@
 package com.example.missedcallreminder
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private val unlockReceiver = ScreenUnlockReceiver()
 
@@ -36,11 +36,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         val missing = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
         }
 
         if (missing.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, missing.toTypedArray(), 101)
+            requestPermissions(missing.toTypedArray(), 101)
         }
     }
 

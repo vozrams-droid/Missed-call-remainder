@@ -1,7 +1,9 @@
 package com.example.missedcallreminder
 
+import android.Manifest
 import android.app.Activity
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.ScrollView
 import android.widget.TextView
@@ -12,32 +14,32 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         val scroll = ScrollView(this)
-        val errorView = TextView(this).apply {
-            setTextColor(Color.RED)
-            textSize = 14f
-            setPadding(32, 48, 32, 48)
+        val statusView = TextView(this).apply {
+            setTextColor(Color.parseColor("#1B5E20"))
+            textSize = 16f
+            setPadding(32, 96, 32, 48)
         }
-        scroll.addView(errorView)
+        scroll.addView(statusView)
         setContentView(scroll)
 
         try {
-            // Test Step 1: Notifications
             AlertHelper.createChannel(this)
 
-            // Test Step 2: Show success if no crash
-            errorView.setTextColor(Color.GREEN)
-            errorView.text = "App initialized successfully! No crash detected.\nChecking permissions..."
-
-            requestPermissions(
-                arrayOf(
-                    android.Manifest.permission.READ_PHONE_STATE,
-                    android.Manifest.permission.READ_CALL_LOG,
-                    android.Manifest.permission.VIBRATE
-                ), 101
+            val perms = mutableListOf(
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_CALL_LOG
             )
+            if (Build.VERSION.SDK_INT >= 33) {
+                perms.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            requestPermissions(perms.toTypedArray(), 101)
+
+            statusView.text = "Missed Call Reminder is ready.\n\n" +
+                "Allow Phone, Call logs and Notifications when asked.\n" +
+                "Missed or declined calls will remind you at the set times."
         } catch (t: Throwable) {
-            // If anything fails, print the exact stack trace directly on your screen
-            errorView.text = "CRASH CAUSE:\n\n" + t.stackTraceToString()
+            statusView.setTextColor(Color.RED)
+            statusView.text = "CRASH CAUSE:\n\n" + t.stackTraceToString()
         }
     }
 }

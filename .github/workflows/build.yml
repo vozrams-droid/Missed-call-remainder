@@ -12,8 +12,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.7
-      - run: gradle assembleDebug
+      - name: Build
+        run: gradle assembleDebug
+        working-directory: .github/workflows
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: .github/workflows/app/build/outputs/apk/debug/*.apk

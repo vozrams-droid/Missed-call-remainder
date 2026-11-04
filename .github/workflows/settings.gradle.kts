@@ -5,14 +5,11 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
 }
-
-rootProject.name = "Missed-call-reminder"
+rootProject.name = "MissedCallReminder"
 include(":app")

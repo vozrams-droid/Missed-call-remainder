@@ -9,12 +9,32 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
 
-class CallReceiver : BroadcastReceiver() {
+object MissedCallScheduler {
+    // Schedules a reminder for every ticked time. Returns how many were scheduled.
+    fun scheduleChecked(context: Context, number: String): Int {
+        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        // Keep this list the same as in MainActivity
+        val choices = listOf(1, 2, 3)
+        val selected = choices.filter { prefs.getBoolean("min_$it", true) }
 
-    companion object {
-        // true = reminders at 1, 2, 3 min (testing). Set false for 5, 15, 20 min.
-        private const val TEST_MODE = true
+        val tag = "missed_$number"
+        val wm = WorkManager.getInstance(context)
+        wm.cancelAllWorkByTag(tag)
+        val missedAt = System.currentTimeMillis()
+
+        selected.forEach { m ->
+            val req = OneTimeWorkRequestBuilder<ReminderWorker>()
+                .setInitialDelay(m.toLong(), TimeUnit.MINUTES)
+                .setInputData(workDataOf("number" to number, "min" to m.toLong(), "missedAt" to missedAt))
+                .addTag(tag)
+                .build()
+            wm.enqueue(req)
+        }
+        return selected.size
     }
+}
+
+class CallReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
@@ -36,30 +56,17 @@ class CallReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 val missed = sp.getBoolean("ringing", false) && !sp.getBoolean("answered", false)
                 if (missed) {
-                    val num = sp.getString("number", null)
-                    if (CallTracker.recordCall(num)) {
-                        AlertHelper.triggerEmergencyEscalation(context, num ?: "Unknown")
+                    val settings = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                    if (settings.getBoolean("busy", true)) {
+                        val raw = sp.getString("number", null)
+                        if (CallTracker.recordCall(raw)) {
+                            AlertHelper.triggerEmergencyEscalation(context, raw ?: "Unknown")
+                        }
+                        MissedCallScheduler.scheduleChecked(context, raw ?: "Unknown")
                     }
-                    scheduleReminders(context, num ?: "Unknown")
                 }
                 sp.edit().clear().apply()
             }
-        }
-    }
-
-    private fun scheduleReminders(context: Context, number: String) {
-        val delays = if (TEST_MODE) listOf(1L, 2L, 3L) else listOf(5L, 15L, 20L)
-        val tag = "missed_$number"
-        val wm = WorkManager.getInstance(context)
-        wm.cancelAllWorkByTag(tag)
-        val missedAt = System.currentTimeMillis()
-        delays.forEach { min ->
-            val req = OneTimeWorkRequestBuilder<ReminderWorker>()
-                .setInitialDelay(min, TimeUnit.MINUTES)
-                .setInputData(workDataOf("number" to number, "min" to min, "missedAt" to missedAt))
-                .addTag(tag)
-                .build()
-            wm.enqueue(req)
         }
     }
 }

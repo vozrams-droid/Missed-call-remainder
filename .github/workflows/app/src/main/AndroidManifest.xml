@@ -3,11 +3,18 @@
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="Missed Call Reminder"
-        android:theme="@android:style/Theme.DeviceDefault.Light">
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity
             android:name=".MainActivity"
@@ -27,7 +34,7 @@
         </receiver>
 
         <receiver
-            android:name=".DismissReceiver"
+            android:name=".ReminderAlarmReceiver"
             android:exported="false" />
 
     </application>

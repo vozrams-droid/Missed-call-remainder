@@ -1,16 +1,16 @@
 package com.example.missedcallreminder
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private val unlockReceiver = ScreenUnlockReceiver()
 
@@ -19,13 +19,13 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         AlertHelper.createChannel(this)
-        requestPermissionsIfNeeded()
+        requestRequiredPermissions()
 
         val filter = IntentFilter(Intent.ACTION_USER_PRESENT)
         registerReceiver(unlockReceiver, filter)
     }
 
-    private fun requestPermissionsIfNeeded() {
+    private fun requestRequiredPermissions() {
         val permissions = mutableListOf(
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_CALL_LOG,
@@ -36,16 +36,20 @@ class MainActivity : Activity() {
         }
 
         val missing = permissions.filter {
-            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
         if (missing.isNotEmpty()) {
-            requestPermissions(missing.toTypedArray(), 101)
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), 1001)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(unlockReceiver)
+        try {
+            unregisterReceiver(unlockReceiver)
+        } catch (_: IllegalArgumentException) {
+            // Receiver was not registered
+        }
     }
 }

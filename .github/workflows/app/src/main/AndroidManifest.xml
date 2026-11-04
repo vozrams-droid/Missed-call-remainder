@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Telephony, vibration, and alert permissions -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -10,9 +11,8 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@android:drawable/sym_def_app_icon"
         android:label="Missed Call Reminder"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
@@ -25,6 +25,7 @@
             </intent-filter>
         </activity>
 
+        <!-- Broadcast receiver for incoming/missed calls -->
         <receiver
             android:name=".CallReceiver"
             android:exported="true">
@@ -33,6 +34,7 @@
             </intent-filter>
         </receiver>
 
+        <!-- Exact alarm receiver for 5, 10, 15 min vibration ticks -->
         <receiver
             android:name=".ReminderAlarmReceiver"
             android:exported="false" />

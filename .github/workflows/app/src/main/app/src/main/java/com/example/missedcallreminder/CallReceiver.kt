@@ -1,56 +1,34 @@
-package com.example.missedcallreminder
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.telephony.TelephonyManager
+android {
+    namespace = "com.example.missedcallreminder"
+    compileSdk = 34
 
-class CallReceiver : BroadcastReceiver() {
-    companion object {
-        private var lastState = TelephonyManager.CALL_STATE_IDLE
-        private var savedNumber: String? = null
-        private var isIncoming = false
+    defaultConfig {
+        applicationId = "com.example.missedcallreminder"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
-
-        val stateStr = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
-        val incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
-
-        var state = TelephonyManager.CALL_STATE_IDLE
-        if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-            state = TelephonyManager.CALL_STATE_RINGING
-        } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-            state = TelephonyManager.CALL_STATE_OFFHOOK
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/app/src/main/java")
         }
-
-        onCustomCallStateChanged(context, state, incomingNumber)
     }
+}
 
-    private fun onCustomCallStateChanged(context: Context, state: Int, number: String?) {
-        if (lastState == state) return
-
-        when (state) {
-            TelephonyManager.CALL_STATE_RINGING -> {
-                isIncoming = true
-                savedNumber = number
-            }
-            TelephonyManager.CALL_STATE_OFFHOOK -> {
-                // Call was answered
-                isIncoming = false
-            }
-            TelephonyManager.CALL_STATE_IDLE -> {
-                if (isIncoming) {
-                    // Call was rejected or missed
-                    val isEscalated = CallTracker.recordCall(savedNumber)
-                    if (isEscalated) {
-                        AlertHelper.triggerEmergencyEscalation(context, savedNumber ?: "Unknown")
-                    }
-                }
-                isIncoming = false
-            }
-        }
-        lastState = state
-    }
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }

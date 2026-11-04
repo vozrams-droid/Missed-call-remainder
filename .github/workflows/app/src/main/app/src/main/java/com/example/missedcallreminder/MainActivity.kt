@@ -1,64 +1,51 @@
 package com.example.missedcallreminder
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.Switch
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
+
+    private val unlockReceiver = ScreenUnlockReceiver()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        setContentView(R.layout.activity_main)
 
-            val layout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(48, 96, 48, 48)
-            }
-            layout.addView(TextView(this).apply {
-                text = "Missed Call Reminder"
-                textSize = 22f
-            })
-            layout.addView(Switch(this).apply {
-                text = "Busy mode (remind me)"
-                isChecked = prefs.getBoolean("busy", true)
-                setOnCheckedChangeListener { _, c ->
-                    prefs.edit().putBoolean("busy", c).apply()
-                }
-            })
-            layout.addView(Switch(this).apply {
-                text = "Test mode (1, 2, 3 min)"
-                isChecked = prefs.getBoolean("test", false)
-                setOnCheckedChangeListener { _, c ->
-                    prefs.edit().putBoolean("test", c).apply()
-                }
-            })
-            layout.addView(TextView(this).apply {
-                text = "Reminders come 5, 15 and 20 minutes after a missed or declined call."
-                setPadding(0, 32, 0, 0)
-            })
-            setContentView(layout)
+        AlertHelper.createChannel(this)
+        requestPermissionsIfNeeded()
 
-            val perms = mutableListOf(
-                Manifest.permission.READ_PHONE_STATE,
-                Manifest.permission.READ_CALL_LOG
-            )
-            if (Build.VERSION.SDK_INT >= 33) {
-                perms.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            requestPermissions(perms.toTypedArray(), 1)
-        } catch (e: Throwable) {
-            setContentView(ScrollView(this).apply {
-                addView(TextView(this@MainActivity).apply {
-                    text = "Error:\n" + e.stackTraceToString()
-                    setPadding(32, 96, 32, 32)
-                })
-            })
+        val filter = IntentFilter(Intent.ACTION_USER_PRESENT)
+        registerReceiver(unlockReceiver, filter)
+    }
+
+    private fun requestPermissionsIfNeeded() {
+        val permissions = mutableListOf(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.VIBRATE
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
+
+        val missing = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (missing.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), 101)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(unlockReceiver)
     }
 }

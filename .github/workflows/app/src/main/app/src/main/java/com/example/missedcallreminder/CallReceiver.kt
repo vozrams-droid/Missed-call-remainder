@@ -4,53 +4,63 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.TelephonyManager
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import java.util.concurrent.TimeUnit
 
 class CallReceiver : BroadcastReceiver() {
+
+    companion object {
+        private var lastState = TelephonyManager.CALL_STATE_IDLE
+        private var ringStartTime = 0L
+        private var callerNumber: String? = null
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
+
         val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
-        val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
-        val sp = context.getSharedPreferences("callstate", Context.MODE_PRIVATE)
+        val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER) ?: "Unknown"
 
         when (state) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
-                sp.edit().putBoolean("ringing", true).putBoolean("answered", false).apply()
-                if (!number.isNullOrEmpty()) sp.edit().putString("number", number).apply()
+                ringStartTime = System.currentTimeMillis()
+                callerNumber = number
+                lastState = TelephonyManager.CALL_STATE_RINGING
             }
-            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                sp.edit().putBoolean("answered", true).apply()
-            }
+
             TelephonyManager.EXTRA_STATE_IDLE -> {
-                val missed = sp.getBoolean("ringing", false) && !sp.getBoolean("answered", false)
-                if (missed) {
-                    val settings = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-                    if (settings.getBoolean("busy", true)) {
-                        val num = sp.getString("number", null) ?: "Unknown"
-                        schedule(context, num, settings.getBoolean("test", false))
+                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
+                    val duration = System.currentTimeMillis() - ringStartTime
+                    val phone = callerNumber ?: number
+                    val callCount = CallTracker.recordCall(phone)
+
+                    if (duration < 2500) {
+                        // User actively hit the red decline button
+                        if (callCount >= 3) {
+                            CallTracker.markPending(phone)
+                            AlertHelper.vibrateUrgent(context)
+                            AlertHelper.scheduleIntervals(context, phone)
+                            AlertHelper.showNotification(context, phone, isEmergency = true)
+                        } else {
+                            AlertHelper.showDeclinedOptions(context, phone)
+                        }
+                    } else {
+                        // Regular missed call
+                        CallTracker.markPending(phone)
+                        if (callCount >= 3) {
+                            AlertHelper.vibrateUrgent(context)
+                            AlertHelper.scheduleIntervals(context, phone)
+                            AlertHelper.showNotification(context, phone, isEmergency = true)
+                        } else {
+                            AlertHelper.showNotification(context, phone, isEmergency = false)
+                        }
                     }
                 }
-                sp.edit().clear().apply()
+                lastState = TelephonyManager.CALL_STATE_IDLE
             }
-        }
-    }
 
-    private fun schedule(context: Context, number: String, testMode: Boolean) {
-        val delays = if (testMode) listOf(1L, 2L, 3L) else listOf(5L, 15L, 20L)
-        val tag = "missed_$number"
-        val wm = WorkManager.getInstance(context)
-        wm.cancelAllWorkByTag(tag)
-        val missedAt = System.currentTimeMillis()
-        delays.forEach { min ->
-            val req = OneTimeWorkRequestBuilder<ReminderWorker>()
-                .setInitialDelay(min, TimeUnit.MINUTES)
-                .setInputData(workDataOf("number" to number, "min" to min, "missedAt" to missedAt))
-                .addTag(tag)
-                .build()
-            wm.enqueue(req)
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                callerNumber?.let { CallTracker.clear(it) }
+                lastState = TelephonyManager.CALL_STATE_OFFHOOK
+            }
         }
     }
 }

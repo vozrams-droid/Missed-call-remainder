@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Telephony, vibration, and alert permissions -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -25,7 +23,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Broadcast receiver for incoming/missed calls -->
         <receiver
             android:name=".CallReceiver"
             android:exported="true">
@@ -34,10 +31,13 @@
             </intent-filter>
         </receiver>
 
-        <!-- Exact alarm receiver for 5, 10, 15 min vibration ticks -->
         <receiver
-            android:name=".ReminderAlarmReceiver"
-            android:exported="false" />
+            android:name=".ScreenUnlockReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

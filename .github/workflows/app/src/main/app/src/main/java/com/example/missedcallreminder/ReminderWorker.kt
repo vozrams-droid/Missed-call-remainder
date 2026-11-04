@@ -8,10 +8,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.CallLog
+import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import androidx.work.WorkManager
 
 class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
@@ -21,30 +25,33 @@ class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
         val missedAt = inputData.getLong("missedAt", 0)
         val ctx = applicationContext
 
-        // If you already called back, stop all remaining reminders
+        // If you already called back, stop the remaining reminders
         if (calledBack(number, missedAt)) {
             WorkManager.getInstance(ctx).cancelAllWorkByTag("missed_$number")
             return Result.success()
         }
 
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.createNotificationChannel(
-            NotificationChannel("missed", "Missed call reminders", NotificationManager.IMPORTANCE_HIGH)
-        )
+        val channel = NotificationChannel(
+            "missed_v2", "Missed call reminders", NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 400, 150, 400)
+        }
+        nm.createNotificationChannel(channel)
 
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        val callBack = PendingIntent.getActivity(
-            ctx, number.hashCode(),
-            Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")), flags
-        )
+        val dial = if (number == "Unknown" || number == "Test number") Intent(Intent.ACTION_DIAL)
+        else Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))
+        val callBack = PendingIntent.getActivity(ctx, number.hashCode(), dial, flags)
         val dismiss = PendingIntent.getBroadcast(
             ctx, number.hashCode(),
             Intent(ctx, DismissReceiver::class.java).putExtra("number", number), flags
         )
 
-        val notif = Notification.Builder(ctx, "missed")
+        val notif = Notification.Builder(ctx, "missed_v2")
             .setSmallIcon(android.R.drawable.sym_call_missed)
-            .setContentTitle("Missed call")
+            .setContentTitle("Missed call reminder ($min min)")
             .setContentText("From $number, $min min ago")
             .setContentIntent(callBack)
             .setAutoCancel(true)
@@ -52,12 +59,29 @@ class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
             .addAction(Notification.Action.Builder(null, "Dismiss", dismiss).build())
             .build()
 
-        nm.notify(number, 1, notif)
+        nm.notify(number, min.toInt(), notif)
+        vibrate(ctx)
         return Result.success()
     }
 
+    private fun vibrate(ctx: Context) {
+        try {
+            val pattern = longArrayOf(0, 400, 150, 400)
+            if (Build.VERSION.SDK_INT >= 31) {
+                val vm = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                v.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            }
+        } catch (e: Exception) {
+            // ignore vibration errors
+        }
+    }
+
     private fun calledBack(number: String, missedAt: Long): Boolean {
-        if (number == "Unknown") return false
+        if (number == "Unknown" || number == "Test number") return false
         return try {
             applicationContext.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
@@ -77,6 +101,6 @@ class DismissReceiver : BroadcastReceiver() {
         val number = intent.getStringExtra("number") ?: return
         WorkManager.getInstance(context).cancelAllWorkByTag("missed_$number")
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.cancel(number, 1)
+        nm.cancelAll()
     }
 }

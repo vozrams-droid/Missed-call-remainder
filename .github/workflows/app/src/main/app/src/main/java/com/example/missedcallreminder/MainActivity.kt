@@ -40,7 +40,6 @@ class MainActivity : Activity() {
 
     private var busyStatus: TextView? = null
     private var summary: TextView? = null
-    private var permStatus: TextView? = null
     private var lastMissed: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,7 +144,6 @@ class MainActivity : Activity() {
         val sm = label("", 13f, primary, true).apply { setPadding(0, dp(10), 0, 0) }
         summary = sm
         timesCard.addView(sm)
-        })
         root.addView(timesCard)
 
         // Last missed call card
@@ -156,8 +154,8 @@ class MainActivity : Activity() {
         lastCard.addView(lm)
         root.addView(lastCard)
 
-        // Permissions card
-        
+        return scroll
+    }
 
     private fun refresh() {
         val on = Prefs.busy(this)
@@ -170,13 +168,6 @@ class MainActivity : Activity() {
         summary?.text =
             if (sel.isEmpty()) "No time selected: you won't get reminders."
             else "You'll be reminded after " + sel.joinToString(", ") + " min."
-
-        val missing = missingPermissions()
-        permStatus?.apply {
-            text = if (missing.isEmpty()) "✓ All permissions allowed"
-            else "Missing: " + missing.joinToString(", ")
-            setTextColor(if (missing.isEmpty()) green else red)
-        }
 
         val num = Prefs.lastNumber(this)
         lastMissed?.text =

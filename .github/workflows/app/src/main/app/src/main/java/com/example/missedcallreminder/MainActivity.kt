@@ -145,15 +145,6 @@ class MainActivity : Activity() {
         val sm = label("", 13f, primary, true).apply { setPadding(0, dp(10), 0, 0) }
         summary = sm
         timesCard.addView(sm)
-        timesCard.addView(button("Send a test reminder", true) {
-            val n = MissedCallScheduler.scheduleSelected(this, "Test number")
-            val first = Prefs.selected(this).minOrNull()
-            Toast.makeText(
-                this,
-                if (n == 0) "Select at least one time first"
-                else "Test started. First reminder in $first min.",
-                Toast.LENGTH_LONG
-            ).show()
         })
         root.addView(timesCard)
 
@@ -166,24 +157,7 @@ class MainActivity : Activity() {
         root.addView(lastCard)
 
         // Permissions card
-        val permCard = card()
-        permCard.addView(label("Permissions & battery", 16f, dark, true))
-        val ps = label("", 14f, gray).apply { setPadding(0, dp(6), 0, 0) }
-        permStatus = ps
-        permCard.addView(ps)
-        permCard.addView(button("Allow permissions", false) { askPermissions() })
-        permCard.addView(button("Battery settings (set Unrestricted)", false) { openAppSettings() })
-        permCard.addView(
-            label(
-                "Tip: on Xiaomi, Oppo, Vivo or Realme phones, also turn on Autostart for this app.",
-                12f, gray
-            ).apply { setPadding(0, dp(12), 0, 0) }
-        )
-        root.addView(permCard)
-
-        refresh()
-        return scroll
-    }
+        
 
     private fun refresh() {
         val on = Prefs.busy(this)

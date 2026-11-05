@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_page">
+    android:background="#F3F4F9">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,30 +15,32 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Missed Call Reminder"
-            android:textColor="@color/primary_accent"
+            android:textColor="#4F46E5"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp" />
 
-        <!-- Gradient Hero Graphic Banner -->
+        <!-- Hero Card -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:background="@drawable/bg_banner"
+            android:layout_height="120dp"
+            android:background="#4F46E5"
             android:gravity="center"
-            android:layout_marginBottom="24dp">
-            <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@drawable/ic_call_missed"
-                android:contentDescription="Missed call icon" />
+            android:orientation="vertical"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📞"
+                android:textSize="40sp" />
         </LinearLayout>
 
         <!-- Toggle Row 1: Busy Mode -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
+            android:background="#FFFFFF"
             android:orientation="horizontal"
             android:padding="16dp"
             android:gravity="center_vertical"
@@ -54,31 +56,31 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Busy mode (remind me)"
-                    android:textColor="@color/text_dark"
+                    android:textColor="#111827"
                     android:textSize="16sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Remind me about calls I miss or decline"
-                    android:textColor="@color/text_muted"
+                    android:textColor="#6B7280"
                     android:textSize="13sp"
-                    android:layout_marginTop="2dp"/>
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
 
             <Switch
                 android:id="@+id/switchBusyMode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"/>
+                android:checked="true" />
         </LinearLayout>
 
         <!-- Toggle Row 2: 15-Sec Alarm Vibration -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
+            android:background="#FFFFFF"
             android:orientation="horizontal"
             android:padding="16dp"
             android:gravity="center_vertical"
@@ -94,31 +96,31 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vibration Alarm"
-                    android:textColor="@color/text_dark"
+                    android:textColor="#111827"
                     android:textSize="16sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vibrate for 15 seconds like an alarm"
-                    android:textColor="@color/text_muted"
+                    android:textColor="#6B7280"
                     android:textSize="13sp"
-                    android:layout_marginTop="2dp"/>
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
 
             <Switch
                 android:id="@+id/switchVibration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"/>
+                android:checked="true" />
         </LinearLayout>
 
         <!-- Timeline Info Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
+            android:background="#FFFFFF"
             android:orientation="vertical"
             android:padding="16dp"
             android:layout_marginBottom="16dp">
@@ -127,11 +129,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Reminders come 5, 10, and 15 minutes after a missed or declined call."
-                android:textColor="@color/text_muted"
+                android:textColor="#6B7280"
                 android:textSize="14sp"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="12dp" />
 
-            <!-- Timeline Dots -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -142,9 +143,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="● 5m   ――――   ● 10m   ――――   ● 15m"
-                    android:textColor="@color/primary_accent"
+                    android:textColor="#4F46E5"
                     android:textStyle="bold"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -152,7 +153,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
+            android:background="#FFFFFF"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -160,6 +161,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Monitored Apps"
-                android:textColor="@color/text_dark"
+                android:textColor="#111827"
                 android:textSize="16sp"
-                android:textStyle="
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Phone Calls\n• WhatsApp Calls"
+                android:textColor="#374151"
+                android:textSize="14sp"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
